@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: web-pink
+  labels:
+    name: web
+    app: example
+    color: pink
+    status: active
+spec:
+  replicas: 2
+  selector:
+    name: web
+    app: example
+    color: pink
+  template:
+    metadata:
+      labels:
+        name: web
+        app: example
+        color: pink
+        status: active
+    spec:
+      volumes:
+        - name: public
+        - name: tmp
+      containers:
+      - name: nginx
+        image: quay.io/spesnova/nginx-example:latest
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+          - mountPath: /app/tmp
+            name: tmp
+          - mountPath: /app/public
+            name: public
+      - name: rails
+        image: quay.io/spesnova/rails-example:pink
+        command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+        volumeMounts:
+          - mountPath: /app/tmp
+            name: tmp
+          - mountPath: /app/public
+            name: public
+        env:
+        - name: "RACK_ENV"
+          value: "production"
+        - name: "RAILS_ENV"
+          value: "production"
+        - name: "DATABASE_URL"
+          value: "postgres://hello:world@db:5432/example"
+        - name: "SECRET_KEY_BASE"
+          value: "61f9fb4243fcf0a8caa6a141f5c03a66eb0be9e1568037fd0201deb31aa392644f9b70e7346d47ccda90bbfc2e8c261c674cc9133c10ab45e73caa02e6e2a2c0"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "256m"

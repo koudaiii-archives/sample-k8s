@@ -1,0 +1,75 @@
+version: "2"
+services:
+  proxy:
+    image: quay.io/spesnova/nginx-example:latest
+    ports:
+      - 80:8080
+    volumes_from:
+      - web
+    depends_on:
+      - web
+    stop_signal: SIGQUIT
+  web:
+    build: .
+    command: [bundle, exec, puma, -C, config/puma.rb]
+    volumes:
+      - /app/tmp
+      - /app/public
+    depends_on:
+      - db
+    links:
+      - db
+    env_file: .env
+    stop_signal: SIGQUIT
+    environment:
+      - RACK_ENV=production
+      - RAILS_ENV=production
+      - DATABASE_URL=postgres://hello:world@db:5432/example
+      - SECRET_KEY_BASE=61f9fb4243fcf0a8caa6a141f5c03a66eb0be9e1568037fd0201deb31aa392644f9b70e7346d47ccda90bbfc2e8c261c674cc9133c10ab45e73caa02e6e2a2c0
+  db:
+    image: postgres:9.5.1
+    stop_signal: SIGTERM
+    environment:
+      - POSTGRES_USER=hello
+      - POSTGRES_PASSWORD=world
+  test:
+    image: quay.io/spesnova/infrataster:latest
+    volumes:
+      - ./test/container:/test/spec
+    depends_on:
+      - proxy
+    network_mode: "service:proxy"
+
+  # Monitoring agent examples
+  datadog:
+    image: datadog/docker-dd-agent:latest
+    container_name: dd-agent
+    env_file: .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cAdvisor
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  # Dedicated logging container examples
+  #logentries:
+  #  image: logentries/docker-logentries:latest
+  #  command: -t ${LOGENTRIES_TOKEN}
+  #  volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock
+  logspout:
+    image: gliderlabs/logspout:v2
+    container_name: logspout
+    ports:
+      - 8000:8000
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock

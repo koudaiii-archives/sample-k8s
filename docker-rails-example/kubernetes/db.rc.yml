@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: db
+  labels:
+    name: db
+    app: example
+spec:
+  replicas: 1
+  selector:
+    name: db
+    app: example
+  template:
+    metadata:
+      labels:
+        name: db
+        app: example
+    spec:
+      containers:
+      - name: mysql
+        image: "postgres:9.5.1"
+        ports:
+        - containerPort: 4567
+        env:
+        - name: POSTGRES_USER
+          value: hello
+        - name: POSTGRES_PASSWORD
+          value: world
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "256m"

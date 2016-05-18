@@ -1,0 +1,28 @@
+#!/bin/bash
+
+test -e
+
+echo "==> Using $COMPOSE_FILE"
+
+echo "==> Creating db service..."
+docker-compose up -d db
+
+echo "==> Waiting 5 seconds for db service..."
+sleep 5
+
+echo "==> Run migration..."
+docker-compose run --rm web rake db:create db:migrate
+
+echo "==> Creating web,proxy service..."
+docker-compose up -d web proxy
+
+echo "==> Waiting 2 seconds for web service..."
+sleep 2
+
+echo "==> Running tests..."
+docker-compose run --rm test
+
+if [ $? -eq 0 ] && [ $COMPOSE_FILE = "docker-compose.yml" ] ; then
+  echo "==> Cleaning up..."
+  docker-compose down
+fi

@@ -1,0 +1,12 @@
+sudo: required
+services:
+  - docker
+env:
+  DOCKER_COMPOSE_VERSION: 1.6.0
+before_install:
+  - docker version
+  - touch .env
+  - docker-compose build
+  - docker-compose pull
+script:
+  - script/test

@@ -1,0 +1,11 @@
+default: &default
+  encoding: unicode
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
